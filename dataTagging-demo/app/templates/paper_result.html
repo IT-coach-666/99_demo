@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head> 
+  <meta charset="utf-8"> 
+  <title>test-paper_search</title> 
+  <style type="text/css">
+    *{margin: 0;padding: 0;}
+    table{
+     table-layout:fixed;word-wrap:break-word;
+        margin: 50px auto;
+        border-spacing: 0;
+    }
+    table th{
+        text-align:center;
+        line-height: 30px;
+        border: 1px solid gray;
+    }
+    table td{
+        overflow:hidden;
+        text-overflow:ellipsis;
+        word-wrap: break-word;
+        word-break: break-all;
+        padding: 3px 3px;
+    }
+    table tr:first-child td:first-child{
+        border-top-left-radius: 10px; /* 设置table左下圆角 */
+    }
+    table tr:first-child td:last-child{
+        border-top-right-radius: 10px;/* 设置table右下圆角 */
+    }
+    table tr:last-child td:first-child{
+        border-bottom-left-radius: 10px; /* 设置table左下圆角 */
+    }
+    table tr:last-child td:last-child{
+        border-bottom-right-radius: 10px;/* 设置table右下圆角 */
+    }
+  </style>
+
+    <script  src="http://static.runoob.com/assets/jquery-validation-1.14.0/lib/jquery.js"></script>
+    <script async>
+      $(document).ready(function(){
+        // 为 radio 类型的 input 绑定点击事件
+        $("input:radio").click(function(){
+            // 具有 true 和 false 的属性, 如 checked、selected 或者 disabled 使用 prop();
+            if ($(this).prop("checked")) {
+                // 对于自定义的 DOM 属性，使用 attr 方法
+                var res = window.confirm("你选中的是：【" + $(this).val() + "】, 请确认无误后点击【确认】提交，否则点击【取消】");
+                var ttl = $(this).attr("ttl");
+                var abst = $(this).attr("abst");
+                var paper_text = $(this).attr("paper_text");
+                var index = $(this).attr("index");
+                var paper_id = $(this).prop("name");
+                var relation = $(this).val();
+                /*
+                alert(ttl);
+                alert(abst);
+                alert(paper_text);
+                alert(paper_id); 
+                alert(index);
+                */
+                if(res == true){
+                    //alert("你点击了“确定”按钮");
+                    $.post("/logging_data",
+                           {"ttl": ttl,
+                            "paper_id": paper_id,
+                            "relation": relation,
+                            "index": index,
+                            "paper_text": paper_text,
+                            "abst": abst},
+                            function(data, status){
+                                if (status == "success"){
+                                    console.log("数据记录成功");
+                                }else{
+                                    console.log("数据记录失败, 状态为: " + status);
+                                }
+                                 
+                    });
+                    
+                }else{
+                    console.log("点击了取消按钮, 重新选择类别...")
+                    //alert("你点击了“取消”按钮");
+                }
+            }
+        });
+      });
+    </script>
+
+</head>
+
+<body>
+  <div style="width: 100%">
+    <form action="./paper_search" method="post">
+      {% if result  %}
+      <strong>  text: </strong><input type="text" size=130 name="paper_text" value="{{ paper_text }}">
+      {% else %}
+      <strong>text: </strong><input type="text" size=130 name="paper_text" value="">
+      {% endif %}
+     
+      {% if is_synonym  %}
+      <input type="checkbox" name="is_synonym" checked/> 是否扩展同义词
+      {% else %}
+      <input type="checkbox" name="is_synonym"/> 是否扩展同义词
+      {% endif %}
+      
+      <input type="submit" value="提交">
+      <br/>
+      <br/>
+      {% if result  %}
+      <strong>文本检测语言: </strong> {{ result["lang"]}} <br/><br/>
+      <strong>从文本中获取的 keyword: </strong>  {{ result["str_keywords"]}}<br/><br/>
+      {% endif %}
+    </form>
+    {% if result  %}
+    <table border="3" cellpadding="1" table-layout:fixed;>
+      <caption>paper 搜索结果(debug) <br/></caption>
+      <tr>
+        <th >编号</th>
+        <th >paper_id</th>
+        <th >title</th>
+        <th >abstract</th>
+        <th >year</th>
+        <th >相关性</th>
+      </tr>
+      {% for dict_paper in result["ls_paper_info"] %}
+      <tr>
+              <td style="width: 60px;">【{{ loop.index }}】</td>
+              <td style="width: 100px;"> {{ dict_paper["paper_id"] }}</td>
+              <td style="width: 200px;"> {{ dict_paper["paper_title"] }}</td>
+              <td style="width: 810px;"> {{ dict_paper["abstract"] }}</td>
+              <td style="width: 60px;"> {{ dict_paper["year"] }}</td>
+              <td style="width: 100px;"> 
+              
+              <input  type="radio" id="{{ dict_paper['paper_id'] }}" index="{{ loop.index }}"  paper_text="{{ paper_text }}" ttl="{{ dict_paper['paper_title'] }}" abst="{{ dict_paper['abstract'] }}" name="{{ dict_paper['paper_id'] }}" value="高度相关">  <label for="{{ dict_paper['paper_id'] }}">高度相关</label> <br/><br/>
+              <input  type="radio" id="{{ dict_paper['paper_id'] }}" index="{{ loop.index }}" paper_text="{{ paper_text }}" ttl="{{ dict_paper['paper_title'] }}" abst="{{ dict_paper['abstract'] }}" name="{{ dict_paper['paper_id'] }}" value="相关"> <label for="{{ dict_paper['paper_id'] }}"> 相关 </label> <br/><br/>
+              <input  type="radio" id="{{ dict_paper['paper_id'] }}" index="{{ loop.index }}" paper_text="{{ paper_text }}" ttl="{{ dict_paper['paper_title'] }}" abst="{{ dict_paper['abstract'] }}" name="{{ dict_paper['paper_id'] }}" value="弱相关"> <label for="{{ dict_paper['paper_id'] }}"> 弱相关 </label> <br/><br/>
+              <input  type="radio" id="{{ dict_paper['paper_id'] }}" index="{{ loop.index }}" paper_text="{{ paper_text }}" ttl="{{ dict_paper['paper_title'] }}" abst="{{ dict_paper['abstract'] }}" name="{{ dict_paper['paper_id'] }}" value="不相关"> <label for="{{ dict_paper['paper_id'] }}"> 不相关 </label><br/><br/>
+              </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+  </div>
+</body>
+</html>
+
+
+
+
+
+
